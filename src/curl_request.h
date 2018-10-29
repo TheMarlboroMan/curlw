@@ -8,27 +8,34 @@
 
 namespace tools {
 
-//!Exception thrown when two conflicting post data carriers are used.
-class curl_request_post_conflict_exception: public std::runtime_error {
+class curl_request_exception:
+	public std::runtime_error {
 	public:
-	
-				curl_request_post_conflict_exception()
-		:std::runtime_error("curl_request error: cannot have both post string and post fields") {
-	}
+			curl_request_exception(const std::string&);
+};
+
+//!Exception thrown when two conflicting post data carriers are used.
+class curl_request_post_conflict_exception:
+	public curl_request_exception {
+	public:
+			curl_request_post_conflict_exception();
 };
 
 //!Exception thrown upon failure when sending the request.
-class curl_request_send_exception:public std::runtime_error {
+class curl_request_send_exception:
+	public curl_request_exception {
 	public:
 
-				curl_request_send_exception(const std::string _e, const std::string _u, CURLcode _c)
-		:std::runtime_error("curl_request error : "+_e+" ["+std::to_string(_c)+"] at "+_u),
-		error{_e}, url{_u}, code{_c} {
-	}
-
+			curl_request_send_exception(const std::string&, const std::string&, CURLcode _c);
 	std::string		error,
-				url;
+					url;
 	CURLcode		code;
+};
+
+class curl_request_not_sent_exception:
+	public curl_request_exception {
+	public:
+		curl_request_not_sent_exception();
 };
 
 //!Wrapper around libcurl, designed to quickly do http requests.
@@ -59,35 +66,25 @@ class curl_request {
 		post_data.push_back({field, std::to_string(p_value)});
 	}
 
-	
+
 	//TODO: This was never implemented.
 	//void 					post(std::string const&, int);
 	//!Manually sets the poststring data to the string set. If both this and post_data fields have been set, an exception is thrown when calling send.
 	void 					poststring(std::string const& c);
-	//!Adds the string to the header list. 
+	//!Adds the string to the header list.
 	void					add_header(const std::string&);
 	//!Adds the pair of key-value to the header list.
 	void					add_header(const std::string&, const std::string&);
 	//!Executes the request. May throw if both post methods are used or if the request fails.
 	void 					send();
-	//TODO: No need for these to be part of the class.
-	//!Callback function to write the response body contents.
-	static size_t 				body_callback(void *, size_t , size_t , void *);
-	//TODO: No need for these to be part of the class.
-	//!Callback function to write the response headers.
-	static size_t 				header_callback(char *, size_t , size_t , void *);
-	//TODO: Should throw if we haven't send.
-	//!Returns the response body.
-	std::string 				get_response_body() const {return this->response_body;}
-	//TODO: Should throw if we haven't send.
-	//!Returns the response headers.
-	std::vector<response_header>		get_response_headers() const {return this->response_headers;}
-	//TODO: Should throw if we haven't send.
-	//!Returns the internal libcurl result code.
-	CURLcode				get_code() const {return res;}
-	//TODO: Should throw if we haven't send.
-	//!Returns the status code returned by the last operation.
-	long					get_status_code() const {return status_code;}
+	//!Returns the response body. Throws if we haven't sent.
+	std::string 				get_response_body() const;
+	//!Returns the response headers. Throws if we haven't sent.
+	std::vector<response_header>		get_response_headers() const;
+	//!Returns the internal libcurl result code. Throws if we haven't sent.
+	CURLcode				get_code() const;
+	//!Returns the status code returned by the last operation. Throws if we haven't sent.
+	long					get_status_code() const;
 	//!Sets accept-decoding parameters, enabling automatic decompression of responses. Set to true by default.
 	void					set_accept_decoding(bool v) {accept_decoding=v;}
 	//TODO: Enable redirecting of this somewhere else.
@@ -107,7 +104,7 @@ class curl_request {
 	std::string 				url_scape_string(const std::string&) const;
 	//!Resets the request so it can be reused.
 
-	//!Resets the sent and recieved data but does nothing to the proxy or 
+	//!Resets the sent and recieved data but does nothing to the proxy or
 	//!verbosity values. Follow location data is reset.
 	void					reset();
 
@@ -116,7 +113,7 @@ class curl_request {
 	//!Represents a key-value pair of post form data. For internal use.
 	struct post_field {
 		std::string name, value;
-	}; 
+	};
 
 
 	//!Reads the header response data to fill human-readable fields.
@@ -132,18 +129,25 @@ class curl_request {
 	struct curl_httppost 			*lastptr;		//!< Internal curl form list ending.
 	struct curl_slist 			*headerlist;		//!< Internal curl request header list.
 
-	std::string 				url,			//!< Url to be requested.
+	std::string 		url,			//!< Url to be requested.
 		 				response_body,		//!< Will contain the response body upon success.
 						proxy,			//!< Proxy url.
 		 				str_response_headers,	//!< Will contain the header part of the response upon success.
 						post_string;		//!< Raw post data of the request.
 
+
 	long 					status_code;		//!< HTTP status code of the response.
 	int					proxy_type;		//!< curl proxy type as in https://curl.haxx.se/libcurl/c/CURLOPT_PROXYTYPE.html
-	bool 					follow_location,	//!< Follow location flag.
+	bool 				follow_location,	//!< Follow location flag.
 						verbose,		//!< Verbosity flag.
-						accept_decoding;	//!< Decompress flag.
+						accept_decoding,	//!< Decompress flag.
+						sent=false;
 };
+
+//!Callback function to write the response body contents.
+size_t 	curl_request_body_callback(void *, size_t , size_t , void *);
+//!Callback function to write the response headers.
+size_t 	curl_request_header_callback(char *, size_t , size_t , void *);
 
 }
 #endif
