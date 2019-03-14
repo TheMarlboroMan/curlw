@@ -231,8 +231,6 @@ void curl_request::process_response_headers() {
 
 		auto line=str_response_headers.substr(ini, pos-ini);
 
-std::cout<<line<<std::endl;
-
 		auto colonpos=line.find(":");
 		if(colonpos!=line.npos) {
 			std::string a=line.substr(0, colonpos), b=line.substr(colonpos+1);
