@@ -1,0 +1,8 @@
+INCLUDE=-I C:\Mingw-w64-builds\include
+LIBPATH=-LC:\Mingw-w64-builds\lib
+CURL_LINKAGE=-DCURL_STATICLIB -lcurl.dll
+EXECUTABLE=a.exe
+DO_CLEAN=rmdir obj /s /q; del $(EXECUTABLE);
+DO_DIR_OBJECTS=if not exist obj mkdir obj & copy nul obj/dummy > nul
+
+include makefile_common
