@@ -53,6 +53,7 @@ curl_request::curl_request(const std::string& purl)
 }
 
 curl_request::~curl_request() {
+
 	reset();
 	curl_easy_cleanup(curl);
 }
@@ -93,7 +94,7 @@ long curl_request::get_status_code() const {
 	return status_code;
 }
 
-void curl_request::reset() {
+curl_request& curl_request::reset() {
 
 	res=CURLE_OK;
 
@@ -105,17 +106,17 @@ void curl_request::reset() {
 
 	response_headers.clear();
 
-	if(post_data.size() && formpost && lastptr) {
+	if(form_data_data.size() && formpost && lastptr) {
 		curl_formfree(formpost);
 		formpost=nullptr;
 		lastptr=nullptr;
-		post_data.clear();
+		form_data_data.clear();
 	}
 
 	url=std::string();
 	response_body=std::string();
 	str_response_headers=std::string();
-	post_string=std::string();
+	payload=std::string();
 	status_code=0;
 	follow_location=false;
 	accept_decoding=true;
@@ -124,6 +125,8 @@ void curl_request::reset() {
 	if(curl) {
 		curl_easy_reset(curl);
 	}
+
+	return *this;
 }
 
 std::string curl_request::url_scape_string(const std::string& c) const {
@@ -134,28 +137,38 @@ std::string curl_request::url_scape_string(const std::string& c) const {
 }
 
 void curl_request::global_init() {
+
 	curl_global_init(CURL_GLOBAL_ALL);
 }
 
-void curl_request::post(std::string const& p_field, std::string const& p_value) {
+curl_request& curl_request::add_field(std::string const& p_field, std::string const& p_value) {
+
 	std::string field=url_scape_string(p_field);
 	std::string value=url_scape_string(p_value);
-	post_data.push_back({field, value});
+	form_data_data.push_back({field, value});
+
+	return *this;
 }
 
-void curl_request::poststring(std::string const& c) {
-	post_string=c;
+curl_request& curl_request::payload(std::string const& c) {
+
+	payload=c;
+	return *this;
 }
 
-void curl_request::add_header(const std::string& c) {
+curl_request& curl_request::add_header(const std::string& c) {
+
 	headers.push_back(c);
+	return *this;
 }
 
-void curl_request::add_header(const std::string& k, const std::string& v) {
+curl_request& curl_request::add_header(const std::string& k, const std::string& v) {
+
 	headers.push_back(k+":"+v);
+	return *this;
 }
 
-void curl_request::send() {
+curl_request& curl_request::send() {
 
 	if(!curl) {
 		curl=curl_easy_init();
@@ -194,15 +207,19 @@ void curl_request::send() {
 		curl_easy_setopt(curl, CURLOPT_PROXYTYPE, proxy_type);
 	}
 
-	if(post_string.size() && post_data.size()) {
+	if(payload.size() && form_data_data.size()) {
 		throw curl_request_post_conflict_exception();
 	}
 
-	if(post_string.size()) {
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_string.c_str());
+	//TODO: Check this, for custom requests...
+	//CURLOPT_CUSTOMREQUEST
+
+	if(payload.size()) {
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
 	}
-	else if(post_data.size()) {
-		for(const auto& pd: post_data) {
+	else if(form_data_data.size()) {
+
+		for(const auto& pd: form_data_data) {
 			curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, pd.name.c_str(), CURLFORM_COPYCONTENTS, pd.value.c_str(), CURLFORM_END);
 		}
 
@@ -216,9 +233,10 @@ void curl_request::send() {
 	if(res != CURLE_OK) {
 		throw curl_request_send_exception(curl_easy_strerror(res), url, err_buffer, res);
 	}
-	else {
-		process_response_headers();
-	}
+
+	process_response_headers();
+
+	return *this;
 }
 
 //!TODO: This completely ignores the first line with the protocol, response and such.
@@ -261,4 +279,47 @@ size_t tools::curl_request_header_callback(char * buffer, size_t size , size_t n
 
 	((std::string*)stream)->append((char*)buffer, 0, size*nitems);
 	return size*nitems;
+}
+
+curl_request& curl_request::set_accept_decoding(bool v) {
+
+	accept_decoding=v;
+	return *this;
+}
+
+curl_request& curl_request::set_verbose(bool v) {
+
+	verbose=v;
+	return *this;
+}
+
+curl_request& curl_request::set_proxy(const std::string& v) {
+
+	proxy=v;
+	return *this;
+}
+
+curl_request& curl_request::set_proxy_type(int v) {
+
+	proxy_type=v;
+	return *this;
+}
+
+curl_request& curl_request::configure_proxy(const std::string& p, int t) {
+
+	proxy=p;
+	proxy_type=t;
+	return *this;
+}
+
+curl_request& curl_request::set_url(const std::string& v) {
+
+	url=v;
+	return *this;
+}
+
+curl_request& curl_request::set_follow_location(bool v) {
+
+	follow_location=v;
+	return *this;
 }
