@@ -27,11 +27,17 @@ curl_request_not_sent_exception::curl_request_not_sent_exception()
 
 }
 
+curl_request_parameter_exception::curl_request_parameter_exception(const std::string& _str)
+	:curl_request_exception("curl_request_error: a parameter error occured : "+_str) {
+
+}
+
 curl_request::curl_request()
 	:curl(nullptr),
 	formpost(nullptr),
 	lastptr(nullptr),
 	headerlist(nullptr),
+	connection_timeout{default_connection_timeout},
 	proxy_type(-1),
 	follow_location(false),
 	verbose(false),
@@ -45,6 +51,7 @@ curl_request::curl_request(const std::string& purl)
 	lastptr(nullptr),
 	headerlist(nullptr),
 	url(purl),
+	connection_timeout{default_connection_timeout},
 	proxy_type(-1),
 	follow_location(false),
 	verbose(false),
@@ -118,6 +125,7 @@ curl_request& curl_request::reset() {
 	str_response_headers=std::string();
 	payload=std::string();
 	status_code=0;
+	connection_timeout=300;
 	follow_location=false;
 	accept_decoding=true;
 	sent=false;
@@ -194,7 +202,7 @@ curl_request& curl_request::send() {
 
 	char err_buffer[CURL_ERROR_SIZE];
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, err_buffer);
-
+	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, connection_timeout);
 	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curl_request_header_callback);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_request_body_callback);	//Función de callback para la response del server.
 	curl_easy_setopt(curl, CURLOPT_HEADERDATA, &str_response_headers);
@@ -321,5 +329,15 @@ curl_request& curl_request::set_url(const std::string& v) {
 curl_request& curl_request::set_follow_location(bool v) {
 
 	follow_location=v;
+	return *this;
+}
+
+curl_request& curl_request::set_connection_timeout(long _val) {
+
+	if(_val <= 0L) {
+		throw curl_request_parameter_exception("set connection timeout must be called with a value larger than zero");
+	}
+
+	connection_timeout=_val;
 	return *this;
 }

@@ -38,6 +38,13 @@ class curl_request_not_sent_exception
 		curl_request_not_sent_exception();
 };
 
+//!Exception thrown when an invalid value is given to a set_x function.
+class curl_request_parameter_exception
+	:public curl_request_exception {
+	public:
+		curl_request_parameter_exception(const std::string&);
+};
+
 //!Wrapper around libcurl, designed to quickly do http requests.
 class curl_request {
 
@@ -88,6 +95,11 @@ class curl_request {
 	curl_request&			set_accept_decoding(bool v);
 	//TODO: Enable redirecting of this somewhere else.
 	//!Enables curl verbose mode.
+
+	//!Sets the connection timeout value. A value lesser or equal than
+ 	//!zero will throw, as curl interprets it as its default (300).
+	curl_request&			set_connection_timeout(long);
+
 	curl_request&			set_verbose(bool v);
 	//!Sets the proxy location.
 	curl_request&			set_proxy(const std::string& v);
@@ -108,6 +120,8 @@ class curl_request {
 	curl_request&			reset();
 
 	private:
+
+	static const long		default_connection_timeout=300L;
 
 	//!Represents a key-value pair of post form data. For internal use.
 	struct http_url_encoded_field {
@@ -136,7 +150,8 @@ class curl_request {
 										payload;		//!< Raw payload.
 
 
-	long 								status_code;		//!< HTTP status code of the response.
+	long 								status_code=0L,	//!< HTTP status code of the response.
+										connection_timeout;	//!<Connection timeout value built in in libcurl.
 	int									proxy_type;		//!< curl proxy type as in https://curl.haxx.se/libcurl/c/CURLOPT_PROXYTYPE.html
 	bool 								follow_location,	//!< Follow location flag.
 										verbose,		//!< Verbosity flag.
