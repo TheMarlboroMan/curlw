@@ -2,7 +2,7 @@ INCLUDE=
 LIBPATH=
 CURL_LINKAGE=-lcurl
 EXECUTABLE=a.out
-DO_CLEAN=if [ -d obj ]; then rm obj/*; rmdir obj; fi; if [ -f $EXECUTABLE ]; then rm $EXECUTABLE; fi;
+DO_CLEAN=if [ -d obj ]; then rm obj/*; rmdir obj; fi; if [ -f $(EXECUTABLE) ]; then rm $(EXECUTABLE); fi;
 DO_DIR_OBJECTS=mkdir -p obj;
 
 include makefile_common

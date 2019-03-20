@@ -12,9 +12,9 @@ struct job {
 	void 			request() {
 		tools::curl_request r("www.example.com");
 		try {
-			r.poststring("FIRE AFTER FIRE!!!");
-			r.send();
-			status_code=r.get_code();
+			status_code=r.set_payload("FIRE AFTER FIRE!!!")
+				.send()
+				.get_code();
 		}
 		catch(std::exception& e) {/*I don´t care if it failed*/}
 		done=true;

@@ -64,7 +64,7 @@ class curl_request {
 	template <typename T>
  	curl_request&	 		add_field(const std::string& p_field, const T& p_value) {
 		std::string field=url_scape_string(p_field);
-		form_data_data.push_back({field, std::to_string(p_value)});
+		form_data.push_back({field, std::to_string(p_value)});
 		return *this;
 	}
 
@@ -105,7 +105,7 @@ class curl_request {
 
 	//!Resets the sent and recieved data but does nothing to the proxy or
 	//!verbosity values. Follow location data is reset.
-	curl_reques&			reset();
+	curl_request&			reset();
 
 	private:
 

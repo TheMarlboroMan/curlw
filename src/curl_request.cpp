@@ -58,7 +58,7 @@ curl_request::~curl_request() {
 	curl_easy_cleanup(curl);
 }
 
-std::string curl_request::get_response_body() const {
+const std::string& curl_request::get_response_body() const {
 
 	if(!sent) {
 		throw curl_request_not_sent_exception();
@@ -67,7 +67,7 @@ std::string curl_request::get_response_body() const {
 	return this->response_body;
 }
 
-std::vector<curl_request::response_header> curl_request::get_response_headers() const {
+const std::vector<curl_request::response_header>& curl_request::get_response_headers() const {
 
 	if(!sent) {
 		throw curl_request_not_sent_exception();
@@ -106,11 +106,11 @@ curl_request& curl_request::reset() {
 
 	response_headers.clear();
 
-	if(form_data_data.size() && formpost && lastptr) {
+	if(form_data.size() && formpost && lastptr) {
 		curl_formfree(formpost);
 		formpost=nullptr;
 		lastptr=nullptr;
-		form_data_data.clear();
+		form_data.clear();
 	}
 
 	url=std::string();
@@ -145,12 +145,12 @@ curl_request& curl_request::add_field(std::string const& p_field, std::string co
 
 	std::string field=url_scape_string(p_field);
 	std::string value=url_scape_string(p_value);
-	form_data_data.push_back({field, value});
+	form_data.push_back({field, value});
 
 	return *this;
 }
 
-curl_request& curl_request::payload(std::string const& c) {
+curl_request& curl_request::set_payload(std::string const& c) {
 
 	payload=c;
 	return *this;
@@ -207,7 +207,7 @@ curl_request& curl_request::send() {
 		curl_easy_setopt(curl, CURLOPT_PROXYTYPE, proxy_type);
 	}
 
-	if(payload.size() && form_data_data.size()) {
+	if(payload.size() && form_data.size()) {
 		throw curl_request_post_conflict_exception();
 	}
 
@@ -217,9 +217,9 @@ curl_request& curl_request::send() {
 	if(payload.size()) {
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
 	}
-	else if(form_data_data.size()) {
+	else if(form_data.size()) {
 
-		for(const auto& pd: form_data_data) {
+		for(const auto& pd: form_data) {
 			curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, pd.name.c_str(), CURLFORM_COPYCONTENTS, pd.value.c_str(), CURLFORM_END);
 		}
 
