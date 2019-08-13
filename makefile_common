@@ -1,20 +1,23 @@
-OPTIMIZATION=-O2
-#DEBUG=-g
+#OPTIMIZATION=-O2
+DEBUG=-g
 FLAGS=-Wall -Wextra -Wundef -Wcast-align -Wwrite-strings -Wlogical-op -Wmissing-declarations -Wredundant-decls -Wshadow -Woverloaded-virtual -Wfatal-errors -Werror -ansi -pedantic -std=c++11 -fno-rtti
 CFLAGS=-c $(DEBUG) $(OPTIMIZATION) $(FLAGS)
 FFLAGS=$(DEBUG) $(OPTIMIZATION) $(FLAGS)
 CC=g++
 
-all: objdir obj/curl_request.o obj/exception.o obj/tools.o main
+all: objdir main 
 
 objdir:
 	$(DO_DIR_OBJECTS)
 
-main: main.cpp obj/curl_request.o obj/exception.o obj/tools.o
-	$(CC) main.cpp obj/curl_request.o $(FFLAGS) $(INCLUDE) $(LIBPATH) $(CURL_LINKAGE) -lpthread
+main: main.cpp obj/curl_request.o obj/exception.o obj/tools.o obj/curl_response.o
+	$(CC) main.cpp obj/curl_request.o obj/exception.o obj/tools.o obj/curl_response.o $(FFLAGS) $(INCLUDE) $(LIBPATH) $(CURL_LINKAGE) -lpthread
 
 obj/curl_request.o: src/curl_request.h src/curl_request.cpp
 	$(CC) $(CFLAGS) src/curl_request.cpp -o obj/curl_request.o $(INCLUDE) $(CFLAGS)
+
+obj/curl_response.o: src/curl_response.h src/curl_response.cpp
+	$(CC) $(CFLAGS) src/curl_response.cpp -o obj/curl_response.o $(INCLUDE) $(CFLAGS)
 
 obj/exception.o: src/exception.h src/exception.cpp
 	$(CC) $(CFLAGS) src/exception.cpp -o obj/exception.o $(INCLUDE) $(CFLAGS)

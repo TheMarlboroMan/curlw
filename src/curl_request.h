@@ -6,7 +6,7 @@
 #include <curl/curl.h>
 
 #include "exception.h"
-#include "structures.h"
+#include "tools.h"
 #include "curl_response.h"
 
 namespace tools {
@@ -25,30 +25,52 @@ class curl_request {
 
 	//!Manually sets the payload. Not compatible with form-urlencoded fields.
 	//!Payload can only be set once.
-	curl_request&					set_payload(const curl_payload&);
+	curl_request&					set_payload(const std::string&);
 
 	//!Adds the key-value pair to the www-formurlencoded map. Not compatible 
 	//!with set_payload. The value will be urlencoded.
 	template<typename T>
-	curl_request&					add_field(const curl_pair<T>& _pair) {
+	curl_request&					add_field(const std::string& _name, const T& _value) {
+
+		return add_field(_name, std::to_string(_value));
+	}
+
+	template<typename T>
+	curl_request&					add_field(const std::string& _name, const char * _value) {
+
+		return add_field(_name, std::string(_value));
+	}
+
+	
+	curl_request&					add_field(const std::string& _name, const std::string& _value) {
 
 		if(payload.size()) {
 			throw curl_request_post_conflict_exception();		
 		}
 		
 		post_data.push_back({
-			curl_request_scape_string(*this, _pair.field),
-			std::to_string(_pair.value)
+			tools::curl_request_escape_string(*this, _name),
+			tools::curl_request_escape_string(*this, _value)
 		});
 	
 		return *this;
 	}
-	
+
 	//!Adds a header. 
 	template<typename T>
-	curl_request&					add_header(const curl_pair<T>& _pair) {
+	curl_request&					add_header(const std::string& _name, const T& _value) {
 
-		headers.push_back(_pair.name+":"+std::to_string(_pair.value));
+		return add_header(_name, std::to_string(_value));
+	}
+
+	curl_request& 					add_header(const std::string& _name, const char * _value) {
+		
+		return add_header(_name, std::string(_value));
+	}
+
+	curl_request& 					add_header(const std::string& _name, const std::string& _value) {
+		
+		headers.push_back(_name+":"+_value);
 		return *this;
 	}
 
@@ -118,7 +140,7 @@ class curl_request {
 									accept_decoding,	//!< Decompress flag.
 									sent=false;
 
-	friend std::string 				url_scape_string(const curl_request&, const std::string&);
+	friend std::string 				curl_request_escape_string(const curl_request&, const std::string&);
 };
 
 }

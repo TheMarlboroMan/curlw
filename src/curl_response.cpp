@@ -1,17 +1,19 @@
 #include "curl_response.h"
 
+#include <algorithm>
+
 using namespace tools;
 
-curl_response::curl_response(int _status_code, std::string&& _body, std::string&& _headers)
-	:status_code{status_code},
+curl_response::curl_response(int _status_code, std::string&& _body, const std::string& _headers)
+	:status_code{_status_code},
 	body{_body} {
 
-	process_response_headers(_headers)
+	process_response_headers(_headers);
 }
 
-void curl_response::process_response_headers(const std::string& _str) {
+#include <iostream>
 
-	//TODO: EXTRACT THE STATUS LINE.
+void curl_response::process_response_headers(const std::string& _str) {
 
 	auto trim=[](std::string& s) -> std::string {
 		auto beg=std::find_if_not(s.begin(),s.end(),[](int c){return std::isspace(c);});
@@ -28,14 +30,30 @@ void curl_response::process_response_headers(const std::string& _str) {
 		}
 
 		auto line=_str.substr(ini, pos-ini);
-		auto colonpos=line.find(":");
-		if(colonpos!=line.npos) {
-			std::string a=line.substr(0, colonpos), 
-						b=line.substr(colonpos+1);
-			response_headers.push_back({trim(a), trim(b)});
+
+		if(!status_line.size()) {
+			status_line=line;
+		}
+		else {
+			auto colonpos=line.find(":");
+			if(colonpos!=line.npos) {
+				std::string a=line.substr(0, colonpos), 
+							b=line.substr(colonpos+1);
+				response_headers.push_back({trim(a), trim(b)});
+			}
 		}
 
 		ini=pos;
 		++pos;
 	}
+}
+
+std::string curl_response::to_string() const {
+
+	std::string headers;
+	for(const auto& r : response_headers) {
+		headers+=r.name+":"+r.value+"\n";
+	}
+
+	return 	status_line+headers+"\n"+body;
 }

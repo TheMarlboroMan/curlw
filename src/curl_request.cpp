@@ -1,7 +1,10 @@
 #include "curl_request.h"
 #include <iostream>
 #include <cctype>
-#include <algorithm>
+
+#include "tools.h"
+
+using namespace tools;
 
 curl_request::curl_request()
 	:curl(nullptr),
@@ -45,7 +48,7 @@ curl_request& curl_request::set_verbose(bool _v) {
 	return *this;
 }
 
-curl_request& curl_request::set_proxy(const std::string& v_) {
+curl_request& curl_request::set_proxy(const std::string& _v) {
 
 	proxy=_v;
 	return *this;
@@ -53,19 +56,19 @@ curl_request& curl_request::set_proxy(const std::string& v_) {
 
 curl_request& curl_request::set_proxy_type(int _v) {
 	
-	proxy_type=v;
+	proxy_type=_v;
 	return *this;
 }
 
-curl_request& curl_request::set_url(const std::string& v) {
+curl_request& curl_request::set_url(const std::string& _v) {
 	
-	url=v;
+	url=_v;
 	return *this;
 }
 
-curl_request& curl_request::set_follow_location(bool v) {
+curl_request& curl_request::set_follow_location(bool _v) {
 	
-	follow_location=v;
+	follow_location=_v;
 	return *this;
 }
 
@@ -79,7 +82,7 @@ curl_request& curl_request::set_payload(const std::string& _str) {
 	return *this;
 }
 
-void curl_response::send() {
+curl_response curl_request::send() {
 	
 	if(!curl) {
 		curl=curl_easy_init();
@@ -146,8 +149,7 @@ void curl_response::send() {
 	}
 	
 	sent=true;
-
-	return curl_response(std::move(status_code), std::move(str_response_body), str_response_headers);
+	return curl_response(status_code, std::move(str_response_body), str_response_headers);
 }
 
 CURLcode curl_request::get_code() const {
