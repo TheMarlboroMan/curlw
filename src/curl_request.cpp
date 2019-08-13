@@ -11,6 +11,7 @@ curl_request::curl_request()
 	formpost(nullptr),
 	lastptr(nullptr),
 	headerlist(nullptr),
+	connection_timeout{default_connection_timeout},
 	proxy_type(-1),
 	follow_location(false),
 	verbose(false),
@@ -24,6 +25,7 @@ curl_request::curl_request(const std::string& purl)
 	lastptr(nullptr),
 	headerlist(nullptr),
 	url(purl),
+	connection_timeout{default_connection_timeout},
 	proxy_type(-1),
 	follow_location(false),
 	verbose(false),
@@ -32,6 +34,7 @@ curl_request::curl_request(const std::string& purl)
 }
 
 curl_request::~curl_request() {
+
 	reset();
 	curl_easy_cleanup(curl);
 }
@@ -82,6 +85,16 @@ curl_request& curl_request::set_payload(const std::string& _str) {
 	return *this;
 }
 
+curl_request& curl_request::set_connection_timeout(long _val) {
+
+	if(_val <= 0L) {
+		throw curl_request_parameter_exception("set connection timeout must be called with a value larger than zero");
+	}
+
+	connection_timeout=_val;
+	return *this;
+}
+
 curl_response curl_request::send() {
 	
 	if(!curl) {
@@ -111,7 +124,6 @@ curl_response curl_request::send() {
 	//TODO: Fuck this, should be done only once per init.
 	char err_buffer[CURL_ERROR_SIZE];
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, err_buffer);
-
 	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());	//Decimos a dónde vamos.
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist); //Añadir las headers.
 
@@ -161,7 +173,7 @@ CURLcode curl_request::get_code() const {
 	return res;
 }
 
-void curl_request::reset() {
+curl_request& curl_request::reset() {
 
 	res=CURLE_OK;
 
@@ -185,6 +197,8 @@ void curl_request::reset() {
 	sent=false;
 
 	if(curl) {
-		curl_easy_reset(curl);		
+		curl_easy_reset(curl);
 	}
+
+	return *this;
 }

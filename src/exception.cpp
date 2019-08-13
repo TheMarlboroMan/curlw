@@ -23,3 +23,9 @@ curl_request_not_sent_exception::curl_request_not_sent_exception()
 	:curl_request_exception("curl_request_error: the request was not sent, thus response is not accesible") {
 
 }
+
+curl_request_parameter_exception::curl_request_parameter_exception(const std::string& _str)
+	:curl_request_exception("curl_request_error: a parameter error occured : "+_str) {
+
+}
+

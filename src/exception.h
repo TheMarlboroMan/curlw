@@ -37,6 +37,13 @@ class curl_request_not_sent_exception
 		curl_request_not_sent_exception();
 };
 
+//!Exception thrown when an invalid value is given to a set_x function.
+class curl_request_parameter_exception
+	:public curl_request_exception {
+	public:
+		curl_request_parameter_exception(const std::string&);
+};
+
 }
 
 #endif

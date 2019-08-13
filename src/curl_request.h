@@ -84,6 +84,10 @@ class curl_request {
 	//!Sets accept-decoding parameters, enabling automatic decompression of responses. Set to true by default.
 	curl_request&					set_accept_decoding(bool _v);
 
+	//!Sets the connection timeout value. A value lesser or equal than
+ 	//!zero will throw, as curl interprets it as its default (300).
+	curl_request&					set_connection_timeout(long);
+
 	//TODO: Where is the set method thingy??????
 
 	//!Enables curl verbose mode.
@@ -111,17 +115,20 @@ class curl_request {
 
 	//!Resets the sent and recieved data but does nothing to the proxy or
 	//!verbosity values. Follow location data is reset.
-	void					reset();
+	curl_request&					reset();
 
 	private:
 
+	static const long				default_connection_timeout=300L;
+
 	//!Represents a key-value pair of post form data. For internal use.
-	struct post_field {
-		std::string name, value;
+	struct http_url_encoded_field {
+		std::string 		name,
+							value;
 	};
 
 	std::vector<std::string>		headers;		//!< Request headers.
-	std::vector<post_field>			post_data;		//!< Request form post data.
+	std::vector<http_url_encoded_field>			post_data;		//!< Request form post data.
 
 	CURL 							*curl;			//!< Curl handle.
 	CURLcode 						res;			//!< Internal curl state, as https://curl.haxx.se/libcurl/c/libcurl-errors.html
@@ -134,6 +141,7 @@ class curl_request {
 									proxy,			//!< Proxy url.
 									payload;		//!< Raw post data of the request.
 
+	long							connection_timeout; //!<Connection timeout value built in in libcurl.
 	int								proxy_type;		//!< curl proxy type as in https://curl.haxx.se/libcurl/c/CURLOPT_PROXYTYPE.html
 	bool 							follow_location,	//!< Follow location flag.
 									verbose,		//!< Verbosity flag.
