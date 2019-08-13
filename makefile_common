@@ -5,16 +5,22 @@ CFLAGS=-c $(DEBUG) $(OPTIMIZATION) $(FLAGS)
 FFLAGS=$(DEBUG) $(OPTIMIZATION) $(FLAGS)
 CC=g++
 
-all: objdir obj/curl_request.o main
+all: objdir obj/curl_request.o obj/exception.o obj/tools.o main
 
 objdir:
 	$(DO_DIR_OBJECTS)
 
-main: main.cpp obj/curl_request.o
+main: main.cpp obj/curl_request.o obj/exception.o obj/tools.o
 	$(CC) main.cpp obj/curl_request.o $(FFLAGS) $(INCLUDE) $(LIBPATH) $(CURL_LINKAGE) -lpthread
 
 obj/curl_request.o: src/curl_request.h src/curl_request.cpp
 	$(CC) $(CFLAGS) src/curl_request.cpp -o obj/curl_request.o $(INCLUDE) $(CFLAGS)
+
+obj/exception.o: src/exception.h src/exception.cpp
+	$(CC) $(CFLAGS) src/exception.cpp -o obj/exception.o $(INCLUDE) $(CFLAGS)
+
+obj/tools.o: src/tools.h src/tools.cpp
+	$(CC) $(CFLAGS) src/tools.cpp -o obj/tools.o $(INCLUDE) $(CFLAGS)
 
 clean:
 	$(DO_CLEAN)
