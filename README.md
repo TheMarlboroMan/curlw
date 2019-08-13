@@ -1,6 +1,6 @@
 # curl_request
 
-Simple wrapper around an HTTP request.
+Wrappers around curl HTTP request.
 
 # Building under Linux.
 
