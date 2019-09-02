@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "src/curl_request_lib.h"
+#include "../src/curl_request_lib.h"
 
 int main(int /*argc*/, char ** /*argv*/) {
 
