@@ -15,8 +15,10 @@ set(SOURCE "")
 add_subdirectory("${PROJECT_SOURCE_DIR}/src")
 
 add_library(toolscurl_st STATIC ${SOURCE})
+
 add_library(toolscurl_sh SHARED ${SOURCE})
 install(TARGETS toolscurl_sh DESTINATION /usr/lib)
+install(DIRECTORY src/ DESTINATION include/toolscurl FILES_MATCHING PATTERN "*.h")
 
 add_executable(main_static tests/main.cpp)
 target_link_libraries(main_static toolscurl_st curl)
