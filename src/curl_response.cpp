@@ -11,8 +11,6 @@ curl_response::curl_response(int _status_code, std::string&& _body, const std::s
 	process_response_headers(_headers);
 }
 
-#include <iostream>
-
 void curl_response::process_response_headers(const std::string& _str) {
 
 	auto trim=[](std::string& s) -> std::string {
