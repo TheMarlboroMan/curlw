@@ -2,3 +2,4 @@
 #include "curl_response.h"
 #include "tools.h"
 #include "exception.h"
+#include "lib.h"

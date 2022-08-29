@@ -1,9 +1,8 @@
-#ifndef TOOLS_CURL_REQUEST_TOOLS_H
-#define TOOLS_CURL_REQUEST_TOOLS_H
+#pragma once
 
 #include <string>
 
-namespace tools {
+namespace curlw {
 
 struct curl_request;
 
@@ -20,4 +19,3 @@ void 			curl_request_global_init();
 std::string 	curl_request_escape_string(const curl_request&, const std::string&);
 }
 
-#endif

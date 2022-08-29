@@ -1,8 +1,8 @@
-#include "curl_response.h"
+#include <curlw/curl_response.h>
 
 #include <algorithm>
 
-using namespace tools;
+using namespace curlw;
 
 curl_response::curl_response(int _status_code, std::string&& _body, const std::string& _headers)
 	:status_code{_status_code},
@@ -19,7 +19,7 @@ void curl_response::process_response_headers(const std::string& _str) {
 		return (end<=beg ? "" : std::string(beg,end));
 	};
 
-	size_t ini=0, pos=0;	
+	size_t ini=0, pos=0;
 	while(true) {
 
 		pos=_str.find(std::string("\n"), pos);
@@ -35,7 +35,7 @@ void curl_response::process_response_headers(const std::string& _str) {
 		else {
 			auto colonpos=line.find(":");
 			if(colonpos!=line.npos) {
-				std::string a=line.substr(0, colonpos), 
+				std::string a=line.substr(0, colonpos),
 							b=line.substr(colonpos+1);
 				response_headers.push_back({trim(a), trim(b)});
 			}
@@ -48,10 +48,10 @@ void curl_response::process_response_headers(const std::string& _str) {
 
 std::string curl_response::to_string() const {
 
-	std::string headers;
+	std::string res_headers;
 	for(const auto& r : response_headers) {
-		headers+=r.name+":"+r.value+"\n";
+		res_headers+=r.name+":"+r.value+"\n";
 	}
 
-	return 	status_line+headers+"\n"+body;
+	return 	status_line+res_headers+"\n"+body;
 }

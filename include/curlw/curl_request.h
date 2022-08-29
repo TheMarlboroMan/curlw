@@ -1,5 +1,4 @@
-#ifndef TOOLS_CURL_REQUEST_H
-#define TOOLS_CURL_REQUEST_H
+#pragma once
 
 #include <vector>
 #include <string>
@@ -9,17 +8,19 @@
 #include "tools.h"
 #include "curl_response.h"
 
-namespace tools {
+namespace curlw {
 
 //!Wrapper around libcurl, designed to quickly do http requests.
 class curl_request {
 
 	public:
-		
+
+	enum class methods {GET, POST, PUT, PATCH, DELETE, HEAD}; //take it easy
+
 	//!Default constructor.
 									curl_request();
 	//!Initializes the class with the url set as the parameter.
-									curl_request(const std::string&);
+									curl_request(const std::string&, methods=methods::GET);
 	//!Resets the request and destroys the curl handle.
 									~curl_request();
 
@@ -27,36 +28,39 @@ class curl_request {
 	//!Payload can only be set once.
 	curl_request&					set_payload(const std::string&);
 
-	//!Adds the key-value pair to the www-formurlencoded map. Not compatible 
+	//!Adds the key-value pair to the www-formurlencoded map. Not compatible
 	//!with set_payload. The value will be urlencoded.
 	template<typename T>
 	curl_request&					add_field(const std::string& _name, const T& _value) {
 
+		check_payload_addition();
 		return add_field(_name, std::to_string(_value));
 	}
 
 	template<typename T>
 	curl_request&					add_field(const std::string& _name, const char * _value) {
 
+		check_payload_addition();
 		return add_field(_name, std::string(_value));
 	}
 
-	
+
 	curl_request&					add_field(const std::string& _name, const std::string& _value) {
 
+		check_payload_addition();
 		if(payload.size()) {
-			throw curl_request_post_conflict_exception();		
+			throw curl_request_post_conflict_exception();
 		}
-		
+
 		post_data.push_back({
-			tools::curl_request_escape_string(*this, _name),
-			tools::curl_request_escape_string(*this, _value)
+			curlw::curl_request_escape_string(*this, _name),
+			curlw::curl_request_escape_string(*this, _value)
 		});
-	
+
 		return *this;
 	}
 
-	//!Adds a header. 
+	//!Adds a header.
 	template<typename T>
 	curl_request&					add_header(const std::string& _name, const T& _value) {
 
@@ -64,12 +68,12 @@ class curl_request {
 	}
 
 	curl_request& 					add_header(const std::string& _name, const char * _value) {
-		
+
 		return add_header(_name, std::string(_value));
 	}
 
 	curl_request& 					add_header(const std::string& _name, const std::string& _value) {
-		
+
 		headers.push_back(_name+":"+_value);
 		return *this;
 	}
@@ -80,7 +84,7 @@ class curl_request {
 		headers.push_back(_header);
 		return *this;
 	}
-	
+
 	//!Sets accept-decoding parameters, enabling automatic decompression of responses. Set to true by default.
 	curl_request&					set_accept_decoding(bool _v);
 
@@ -89,10 +93,11 @@ class curl_request {
 	curl_request&					set_connection_timeout(long);
 
 	//TODO: Where is the set method thingy??????
+	curl_request&					set_method(methods);
 
 	//!Enables curl verbose mode.
 	curl_request&					set_verbose(bool _v);
-			
+
 	//!Sets the proxy location.
 	curl_request&					set_proxy(const std::string& _v);
 
@@ -101,10 +106,10 @@ class curl_request {
 
 	//!Sets the url to be used in the request.
 	curl_request& 					set_url(const std::string& v);
-	
+
 	//!Enables curl to follow redirects until it arrives to the final response. Disabled by default.
 	curl_request&					set_follow_location(bool v);
-	
+
 	//!Executes the request.
 	curl_response 					send();
 
@@ -118,6 +123,8 @@ class curl_request {
 	curl_request&					reset();
 
 	private:
+
+	void                            check_payload_addition();
 
 	static const long				default_connection_timeout=300L;
 
@@ -140,6 +147,7 @@ class curl_request {
 	std::string 					url,			//!< Url to be requested.
 									proxy,			//!< Proxy url.
 									payload;		//!< Raw post data of the request.
+	methods                         method{methods::GET};
 
 	long							connection_timeout; //!<Connection timeout value built in in libcurl.
 	int								proxy_type;		//!< curl proxy type as in https://curl.haxx.se/libcurl/c/CURLOPT_PROXYTYPE.html
@@ -152,4 +160,3 @@ class curl_request {
 };
 
 }
-#endif

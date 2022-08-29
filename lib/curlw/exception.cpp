@@ -1,6 +1,6 @@
-#include "exception.h"
+#include <curlw/exception.h>
 
-using namespace tools;
+using namespace curlw;
 
 curl_request_exception::curl_request_exception(const std::string& _str)
 	:std::runtime_error(_str) {
@@ -29,3 +29,8 @@ curl_request_parameter_exception::curl_request_parameter_exception(const std::st
 
 }
 
+
+curl_request_no_body_allowed_exception::curl_request_no_body_allowed_exception(const std::string& _str)
+	:curl_request_exception("curl_request_error: the method does not allow body : "+_str) {
+
+}

@@ -1,16 +1,17 @@
-#include "curl_request.h"
+#include <curlw/curl_request.h>
+#include <curlw/tools.h>
+
 #include <iostream>
 #include <cctype>
 
-#include "tools.h"
-
-using namespace tools;
+using namespace curlw;
 
 curl_request::curl_request()
 	:curl(nullptr),
 	formpost(nullptr),
 	lastptr(nullptr),
 	headerlist(nullptr),
+	method{methods::GET},
 	connection_timeout{default_connection_timeout},
 	proxy_type(-1),
 	follow_location(false),
@@ -19,12 +20,16 @@ curl_request::curl_request()
 
 }
 
-curl_request::curl_request(const std::string& purl)
+curl_request::curl_request(
+	const std::string& purl,
+	methods _method
+)
 	:curl(nullptr),
 	formpost(nullptr),
 	lastptr(nullptr),
 	headerlist(nullptr),
 	url(purl),
+	method{_method},
 	connection_timeout{default_connection_timeout},
 	proxy_type(-1),
 	follow_location(false),
@@ -58,27 +63,29 @@ curl_request& curl_request::set_proxy(const std::string& _v) {
 }
 
 curl_request& curl_request::set_proxy_type(int _v) {
-	
+
 	proxy_type=_v;
 	return *this;
 }
 
 curl_request& curl_request::set_url(const std::string& _v) {
-	
+
 	url=_v;
 	return *this;
 }
 
 curl_request& curl_request::set_follow_location(bool _v) {
-	
+
 	follow_location=_v;
 	return *this;
 }
 
 curl_request& curl_request::set_payload(const std::string& _str) {
-	
+
+	check_payload_addition();
+
 	if(post_data.size()) {
-		throw curl_request_post_conflict_exception();		
+		throw curl_request_post_conflict_exception();
 	}
 
 	payload=_str;
@@ -95,13 +102,22 @@ curl_request& curl_request::set_connection_timeout(long _val) {
 	return *this;
 }
 
+curl_request& curl_request::set_method(
+	methods _method
+) {
+
+	method=_method;
+	return *this;
+}
+
 curl_response curl_request::send() {
-	
+
 	if(!curl) {
 		curl=curl_easy_init();
-		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, tools::curl_request_header_callback);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, tools::curl_request_body_callback);	//Función de callback para la response del server.	
 	}
+
+	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, curlw::curl_request_header_callback);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlw::curl_request_body_callback);	//Función de callback para la response del server.
 
 	for(const auto& c : headers) {
 		headerlist=curl_slist_append(headerlist, c.c_str());
@@ -132,23 +148,51 @@ curl_response curl_request::send() {
 		curl_easy_setopt(curl, CURLOPT_PROXYTYPE, proxy_type);
 	}
 
-	//TODO: Where is the SET METHOD THINGY????
-	if(payload.size()) {
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
+	switch(method) {
+
+		case methods::GET:
+			curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+		break;
+
+		case methods::POST:
+		case methods::PUT:
+		case methods::PATCH:
+		case methods::DELETE:
+
+			if(method==methods::POST) {
+				curl_easy_setopt(curl, CURLOPT_POST, 1L);
+				//curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+			}
+			else if(method==methods::PUT) {
+				curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+			}
+			else if(method==methods::PATCH) {
+				curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PATCH");
+			}
+			else if(method==methods::DELETE) {
+				curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+			}
+
+			if(payload.size()) {
+				curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
+			}
+			else if(post_data.size()) {
+
+				for(const auto& pd: post_data) {
+					curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, pd.name.c_str(), CURLFORM_COPYCONTENTS, pd.value.c_str(), CURLFORM_END);
+				}
+			}
+		break;
+
+		case methods::HEAD:
+			curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
+		break;
 	}
-	else if(post_data.size()) {
 
-		for(const auto& pd: post_data) {
-			curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, pd.name.c_str(), CURLFORM_COPYCONTENTS, pd.value.c_str(), CURLFORM_END);
-		}
 
-		//TODO: https://curl.haxx.se/libcurl/c/CURLOPT_CUSTOMREQUEST.html
-		//Hmmm... yeah, no, will not do :(
-		curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
-	}
 
-	std::string	str_response_headers,
-				str_response_body;
+	std::string	str_response_headers{},
+				str_response_body{};
 	curl_easy_setopt(curl, CURLOPT_HEADERDATA, &str_response_headers);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &str_response_body);	//Datos que se pasan a la función de callback.
 
@@ -159,7 +203,7 @@ curl_response curl_request::send() {
 	if(res != CURLE_OK) {
 		throw curl_request_send_exception(curl_easy_strerror(res), url, err_buffer, res);
 	}
-	
+
 	sent=true;
 	return curl_response(status_code, std::move(str_response_body), str_response_headers);
 }
@@ -191,14 +235,35 @@ curl_request& curl_request::reset() {
 	}
 
 	url=std::string();
+	proxy=std::string{};
 	payload=std::string();
+	method=methods::GET;
 	follow_location=false;
 	accept_decoding=true;
 	sent=false;
 
 	if(curl) {
+		curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, nullptr);
 		curl_easy_reset(curl);
 	}
 
 	return *this;
+}
+
+void curl_request::check_payload_addition() {
+
+	switch(method) {
+
+		case methods::POST:
+		case methods::PUT:
+		case methods::PATCH:
+		case methods::DELETE:
+			return;
+		case methods::GET:
+			throw curl_request_no_body_allowed_exception("GET");
+		case methods::HEAD:
+			throw curl_request_no_body_allowed_exception("HEAD");
+
+	}
+
 }

@@ -1,12 +1,9 @@
 set(SOURCE
 	${SOURCE}
 	${CMAKE_CURRENT_SOURCE_DIR}/curl_request.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/curl_request.h
 	${CMAKE_CURRENT_SOURCE_DIR}/curl_response.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/curl_response.h
 	${CMAKE_CURRENT_SOURCE_DIR}/exception.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/exception.h
 	${CMAKE_CURRENT_SOURCE_DIR}/tools.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/tools.h
+	${CMAKE_CURRENT_SOURCE_DIR}/lib.cpp
 	PARENT_SCOPE
 )

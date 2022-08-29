@@ -1,15 +1,14 @@
-#ifndef TOOLS_CURL_REQUEST_RESPONSE_H
-#define TOOLS_CURL_REQUEST_RESPONSE_H
+#pragma once
 
 #include <vector>
 #include <string>
 #include <curl/curl.h>
 
-namespace tools {
+namespace curlw {
 
 //!Represents a list of headers for the response.
 struct curl_response_header {
-	std::string	 				name, 
+	std::string	 				name,
 								value;
 };
 
@@ -22,18 +21,18 @@ class curl_response {
 
 	//!Returns the response body.
 	const std::string&			get_body() const {return body;}
-	
-	const std::string&			get_status_line() const {return status_line;}	
+
+	const std::string&			get_status_line() const {return status_line;}
 	//!Returns the response headers.
 	const headers&				get_headers() const {return response_headers;}
-	
+
 	//!Returns the status code returned by the last operation.
 	long						get_status_code() const {return status_code;}
 
 	std::string					to_string() const;
 
 	private:
-	
+
 
 	//!Reads the header response data to fill human-readable fields.
 	void						process_response_headers(const std::string&);
@@ -45,4 +44,3 @@ class curl_response {
 };
 
 }
-#endif

@@ -1,11 +1,10 @@
-#ifndef TOOLS_CURL_REQUEST_EXCEPTION_H
-#define TOOLS_CURL_REQUEST_EXCEPTION_H
+#pragma once
 
 #include <stdexcept>
 #include <string>
 #include <curl/curl.h>
 
-namespace tools {
+namespace curlw {
 
 class curl_request_exception
 	:public std::runtime_error {
@@ -18,6 +17,12 @@ class curl_request_post_conflict_exception
 	:public curl_request_exception {
 	public:
 			curl_request_post_conflict_exception();
+};
+
+class curl_request_no_body_allowed_exception
+	:public curl_request_exception {
+	public:
+			curl_request_no_body_allowed_exception(const std::string&);
 };
 
 //!Exception thrown upon failure when sending the request.
@@ -46,4 +51,3 @@ class curl_request_parameter_exception
 
 }
 
-#endif
