@@ -1,6 +1,6 @@
-# curl_request
+# curlw
 
-Wrappers around curl HTTP request.
+Wrappers around curl HTTP requests. Formerly known as "curl_request".
 
 # Building under Linux.
 
@@ -21,3 +21,7 @@ Wrappers around curl HTTP request.
 - Open a shell. Set your path to the "bin" directory of winbuilds (PATH=%PATH%;path-to-the-bin-directory)
 - mingw32-make.exe -f makefile_win
 - Whatever you use this for, compile with -lcurl.dll
+
+# licenses
+
+This library makes no sense without libcurl itself, whose license can be read on the LICENSE_THIRD_PARTY file.
